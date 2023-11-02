@@ -1,7 +1,10 @@
 package camera
 
 import (
+	"errors"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -11,6 +14,11 @@ const (
 	UP    = "UP"
 	DOWN  = "DWON"
 )
+
+type move struct {
+	direction string
+	quantity  int
+}
 
 type Camera struct {
 	OnvifIP   string
@@ -42,34 +50,31 @@ func (h Camera) Move(d string) error {
 	return err
 }
 
-func (h Camera) Centralize() error {
-	for i := 0; i <= 20; i++ {
-		if err := h.Move(LEFT); err != nil {
-			return err
+func (h Camera) Centralize(moves string) error {
+	mm := strings.Split(moves, ",")
+	mvs := make([]move, 0)
+	for _, m := range mm {
+		nm := strings.Split(m, "=")
+		if len(nm) < 2 {
+			return errors.New(m + " is an invalid move")
 		}
-
-		time.Sleep(time.Duration(time.Millisecond * 1000))
+		qtd, err := strconv.ParseInt(nm[1], 10, 0)
+		if err != nil {
+			return errors.New(m + " has an invalid quantity")
+		}
+		mvs = append(mvs, move{
+			direction: nm[0],
+			quantity:  int(qtd),
+		})
 	}
-	for i := 0; i <= 20; i++ {
-		if err := h.Move(DOWN); err != nil {
-			return err
-		}
 
-		time.Sleep(time.Duration(time.Millisecond * 1000))
-	}
-	for i := 0; i <= 9; i++ {
-		if err := h.Move(RIGHT); err != nil {
-			return err
+	for _, m := range mvs {
+		for i := 0; i < m.quantity; i++ {
+			if err := h.Move(m.direction); err != nil {
+				return err
+			}
+			time.Sleep(time.Duration(time.Millisecond * 500))
 		}
-
-		time.Sleep(time.Duration(time.Millisecond * 1000))
-	}
-	for i := 0; i <= 2; i++ {
-		if err := h.Move(UP); err != nil {
-			return err
-		}
-
-		time.Sleep(time.Duration(time.Millisecond * 1000))
 	}
 
 	return nil

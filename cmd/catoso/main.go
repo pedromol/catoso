@@ -33,7 +33,7 @@ func main() {
 
 	if cfg.CenterCamera != "" {
 		cam := camera.NewCamera(cfg.OnvifIP, cfg.OnvifPort)
-		if err := cam.Centralize(); err != nil {
+		if err := cam.Centralize(cfg.CenterCamera); err != nil {
 			panic(err)
 		}
 	}
@@ -50,7 +50,7 @@ func main() {
 	er1, ew1 := io.Pipe()
 
 	ffchan := enc.ReadStream(pw1, ew1)
-	cvimg, cvchan := vis.Process(pr1)
+	cvimg, cvchan := vis.Process(pr1, cfg.CatosoDebug)
 
 	for {
 		select {

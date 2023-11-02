@@ -2,6 +2,7 @@ package vision
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"io"
@@ -26,9 +27,13 @@ func NewVision(xmlPath string, w int, h int) Vision {
 	}
 }
 
-func (v Vision) Process(reader io.ReadCloser) (chan []byte, chan error) {
+func (v Vision) Process(reader io.ReadCloser, debug string) (chan []byte, chan error) {
 	result := make(chan error)
 	imgchan := make(chan []byte)
+	var win *gocv.Window
+	if debug != "" {
+		win = gocv.NewWindow(Catoso)
+	}
 	go func() {
 		detected := 0
 		lastConfirmed := time.Date(1, time.January, 1, 1, 1, 1, 1, time.Local)
@@ -80,6 +85,7 @@ func (v Vision) Process(reader io.ReadCloser) (chan []byte, chan error) {
 			}
 
 			if detected > 3 {
+				fmt.Println(Catoso)
 				lastConfirmed = time.Now().Add(time.Duration(time.Minute * 10))
 				for _, r := range rects {
 					gocv.Rectangle(&img2, r, blue, 3)
@@ -97,6 +103,10 @@ func (v Vision) Process(reader io.ReadCloser) (chan []byte, chan error) {
 
 					imgchan <- buff.GetBytes()
 				}()
+			}
+			if debug != "" {
+				win.IMShow(img2)
+				win.WaitKey(10)
 			}
 		}
 	}()
