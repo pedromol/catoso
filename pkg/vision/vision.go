@@ -68,13 +68,13 @@ func (v Vision) Process(reader io.ReadCloser, debug string) (chan []byte, chan e
 			if err != nil {
 				continue
 			}
-			defer img.Close()
 
 			if img.Empty() {
+				img.Close()
 				continue
 			}
 			img2 := gocv.NewMat()
-			defer img2.Close()
+
 			gocv.CvtColor(img, &img2, gocv.ColorBGRToRGB)
 
 			rects := classifier.DetectMultiScale(img2)
@@ -108,6 +108,9 @@ func (v Vision) Process(reader io.ReadCloser, debug string) (chan []byte, chan e
 				win.IMShow(img2)
 				win.WaitKey(10)
 			}
+
+			img.Close()
+			img2.Close()
 		}
 	}()
 	return imgchan, result
