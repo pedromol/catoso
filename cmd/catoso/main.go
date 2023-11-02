@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
-	"strings"
+	"time"
 
 	"io"
 
@@ -50,11 +50,13 @@ func main() {
 	er1, ew1 := io.Pipe()
 
 	ffchan := enc.ReadStream(pw1, ew1)
+	errchan := enc.Catch(er1)
 	cvimg, cvchan := vis.Process(pr1, cfg.CatosoDebug)
 
 	for {
 		select {
 		case ff := <-ffchan:
+			fmt.Println(ff)
 			panic(ff)
 		case cv := <-cvchan:
 			panic(cv)
@@ -62,13 +64,10 @@ func main() {
 			if err := tel.SendPhoto(chatId, img); err != nil {
 				panic(err)
 			}
-		default:
-			buf := make([]byte, 1024)
-			er1.Read(buf)
-			if strings.Contains(string(buf), "More than 1000 frames duplicated") {
-				fmt.Print(string(buf))
-				return
-			}
+		case err := <-errchan:
+			panic(err)
+		case <-time.After(1 * time.Second):
+			//noop
 		}
 	}
 }

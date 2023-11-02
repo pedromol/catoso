@@ -3,7 +3,9 @@ package encoder
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	ffmpeg "github.com/u2takey/ffmpeg-go"
@@ -52,7 +54,7 @@ func (h Encoder) ReadStream(stdout io.WriteCloser, stderr io.WriteCloser) chan e
 	go func() {
 		defer stdout.Close()
 		defer stderr.Close()
-		result <- ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": "tcp"}).
+		err := ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": "tcp"}).
 			Output("pipe:",
 				ffmpeg.KwArgs{
 					"format": "rawvideo", "pix_fmt": "rgb24",
@@ -60,7 +62,25 @@ func (h Encoder) ReadStream(stdout io.WriteCloser, stderr io.WriteCloser) chan e
 			WithOutput(stdout).
 			WithErrorOutput(stderr).
 			Run()
+		fmt.Println("acolá")
+		fmt.Println(err)
+		result <- err
 	}()
 
 	return result
+}
+
+func (h Encoder) Catch(er io.Reader) chan error {
+	err := make(chan error)
+	go func() {
+		for {
+			buf := make([]byte, 1024)
+			er.Read(buf)
+			if strings.Contains(string(buf), "More than 1000 frames duplicated") {
+				err <- errors.New(string(buf))
+				return
+			}
+		}
+	}()
+	return err
 }
