@@ -31,9 +31,11 @@ func main() {
 		panic(err)
 	}
 
-	cam := camera.NewCamera(cfg.OnvifIP, cfg.OnvifPort)
-	if err := cam.Centralize(); err != nil {
-		panic(err)
+	if cfg.CenterCamera != "" {
+		cam := camera.NewCamera(cfg.OnvifIP, cfg.OnvifPort)
+		if err := cam.Centralize(); err != nil {
+			panic(err)
+		}
 	}
 
 	enc := encoder.NewEncoder(cfg.InputImage)

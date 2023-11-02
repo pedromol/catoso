@@ -51,17 +51,27 @@ RUN curl -Lo opencv.zip ${OPENCV_FILE} && \
 ENV ASDF_DIR=/root/.asdf
 WORKDIR /go/src/app
 
-COPY . /go/src/app
 RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.13.1 && \
     echo '. "$HOME/.asdf/asdf.sh"' >> ~/.bashrc && \
     . "$HOME/.asdf/asdf.sh" && \
     asdf plugin add golang https://github.com/asdf-community/asdf-golang.git && \
     asdf install golang 1.21.3 && \
-    asdf global golang 1.21.3 && \
+    asdf global golang 1.21.3
+    
+COPY cmd /go/src/app/cmd
+COPY pkg /go/src/app/pkg
+COPY data /go/src/app/data
+COPY go.mod /go/src/app/
+COPY go.sum /go/src/app/
+
+RUN . "$HOME/.asdf/asdf.sh" && \
     go build -o catoso cmd/catoso/main.go && \
     cp catoso /usr/local/bin
 
 WORKDIR /
 RUN rm -Rf /go
 
-ENTRYPOINT ["bash", "-c", "opencv_version -b && ffmpeg -version"]
+COPY data/haarcascade_frontalcatface_extended.xml /
+COPY data/haarcascade_frontalcatface.xml /
+
+ENTRYPOINT ["catoso"]

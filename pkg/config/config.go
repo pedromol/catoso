@@ -12,6 +12,7 @@ type Config struct {
 	OnvifPort     string `mapstructure:"ONVIF_PORT"`
 	InputImage    string `mapstructure:"INPUT_IMAGE"`
 	CascadePath   string `mapstructure:"CASCADE_PATH"`
+	CenterCamera  string `mapstructure:"CENTER_CAMERA"`
 }
 
 func NewConfig() (Config, error) {
@@ -22,6 +23,7 @@ func NewConfig() (Config, error) {
 		OnvifPort:     os.Getenv("ONVIF_PORT"),
 		InputImage:    os.Getenv("INPUT_IMAGE"),
 		CascadePath:   os.Getenv("CASCADE_PATH"),
+		CenterCamera:  os.Getenv("CENTER_CAMERA"),
 	}
 
 	if cfg.TelegramToken == "" {
