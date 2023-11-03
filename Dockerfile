@@ -22,31 +22,35 @@ RUN curl -Lo opencv.zip ${OPENCV_FILE} && \
             unzip -q opencv_contrib.zip && \
             rm opencv.zip opencv_contrib.zip && \
             cd opencv-${OPENCV_VERSION} && \
-            mkdir build && cd build && \
-            cmake -D CMAKE_BUILD_TYPE=RELEASE \
-                  -D WITH_IPP=OFF \
-                  -D WITH_OPENGL=OFF \
-                  -D WITH_QT=OFF \
-                  -D CMAKE_INSTALL_PREFIX=/usr/local \
-                  -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-${OPENCV_VERSION}/modules \
-                  -D OPENCV_ENABLE_NONFREE=ON \
-                  -D WITH_JASPER=OFF \
-                  -D WITH_TBB=ON \
-                  -D BUILD_JPEG=ON \
-                  -D WITH_SIMD=ON \
-                  -D ENABLE_LIBJPEG_TURBO_SIMD=ON \
-                  -D BUILD_DOCS=OFF \
-                  -D BUILD_EXAMPLES=OFF \
-                  -D BUILD_TESTS=OFF \
-                  -D BUILD_PERF_TESTS=ON \
-                  -D BUILD_opencv_java=NO \
-                  -D BUILD_opencv_python=NO \
-                  -D BUILD_opencv_python2=NO \
-                  -D BUILD_opencv_python3=NO \
-                  -D OPENCV_GENERATE_PKGCONFIG=ON .. && \
-            make -j $(nproc --all) && \
-            make preinstall && make install && ldconfig && \
-            cd / && rm -rf opencv*
+            mkdir build
+
+WORKDIR /opencv-${OPENCV_VERSION}/build
+
+RUN [ "$(lscpu | head -n 1 | awk '{print $2}')" = aarch64 ] && export EXTRA_FLAGS='-D ENABLE_NEON=ON' || export EXTRA_FLAGS='-D ENABLE_NEON=OFF' && \
+    cmake $EXTRA_FLAGS -D CMAKE_BUILD_TYPE=RELEASE \
+            -D WITH_IPP=OFF \
+            -D WITH_OPENGL=OFF \
+            -D WITH_QT=OFF \
+            -D CMAKE_INSTALL_PREFIX=/usr/local \
+            -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-${OPENCV_VERSION}/modules \
+            -D OPENCV_ENABLE_NONFREE=ON \
+            -D WITH_JASPER=OFF \
+            -D WITH_TBB=ON \
+            -D BUILD_JPEG=ON \
+            -D WITH_SIMD=ON \
+            -D ENABLE_LIBJPEG_TURBO_SIMD=ON \
+            -D BUILD_DOCS=OFF \
+            -D BUILD_EXAMPLES=OFF \
+            -D BUILD_TESTS=OFF \
+            -D BUILD_PERF_TESTS=ON \
+            -D BUILD_opencv_java=NO \
+            -D BUILD_opencv_python=NO \
+            -D BUILD_opencv_python2=NO \
+            -D BUILD_opencv_python3=NO \
+            -D OPENCV_GENERATE_PKGCONFIG=ON .. && \
+    make -j $(nproc --all) && \
+    make preinstall && make install && ldconfig && \
+    cd / && rm -rf opencv*
 
 ENV ASDF_DIR=/root/.asdf
 WORKDIR /go/src/app
@@ -60,9 +64,10 @@ RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.13.1 && \
     
 COPY cmd /go/src/app/cmd
 COPY pkg /go/src/app/pkg
-COPY data /go/src/app/data
 COPY go.mod /go/src/app/
 COPY go.sum /go/src/app/
+COPY data/haarcascade_frontalcatface_extended.xml /
+COPY data/haarcascade_frontalcatface.xml /
 
 RUN . "$HOME/.asdf/asdf.sh" && \
     go build -o catoso cmd/catoso/main.go && \
@@ -70,8 +75,5 @@ RUN . "$HOME/.asdf/asdf.sh" && \
 
 WORKDIR /
 RUN rm -Rf /go
-
-COPY data/haarcascade_frontalcatface_extended.xml /
-COPY data/haarcascade_frontalcatface.xml /
 
 ENTRYPOINT ["catoso"]

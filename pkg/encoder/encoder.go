@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	ffmpeg "github.com/u2takey/ffmpeg-go"
+	ffmpeg "github.com/pedromol/catoso/pkg/ffmpeg_go"
 )
 
 type VideoInfo struct {
