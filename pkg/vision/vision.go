@@ -86,7 +86,7 @@ func (v Vision) Process(reader io.ReadCloser, debug string) (chan []byte, chan e
 
 			if detected > 3 {
 				fmt.Println(Catoso)
-				lastConfirmed = time.Now().Add(time.Duration(time.Minute * 10))
+				lastConfirmed = time.Now().Add(time.Duration(time.Minute * 2))
 				for _, r := range rects {
 					gocv.Rectangle(&img2, r, blue, 3)
 
@@ -94,15 +94,13 @@ func (v Vision) Process(reader io.ReadCloser, debug string) (chan []byte, chan e
 					pt := image.Pt(r.Min.X+(r.Min.X/2)-(size.X/2), r.Min.Y-2)
 					gocv.PutText(&img2, Catoso, pt, gocv.FontHersheyPlain, 1.2, blue, 2)
 				}
-				go func() {
-					buff, err := gocv.IMEncode(gocv.JPEGFileExt, img2)
-					if err != nil {
-						result <- err
-						return
-					}
+				buff, err := gocv.IMEncode(gocv.JPEGFileExt, img2)
+				if err != nil {
+					result <- err
+					return
+				}
 
-					imgchan <- buff.GetBytes()
-				}()
+				imgchan <- buff.GetBytes()
 			}
 			if debug != "" {
 				win.IMShow(img2)
