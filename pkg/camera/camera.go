@@ -2,7 +2,7 @@ package camera
 
 import (
 	"errors"
-	"fmt"
+	"log"
 	"net"
 	"strconv"
 	"strings"
@@ -34,7 +34,7 @@ func NewCamera(ip string, port string) Camera {
 }
 
 func (h Camera) Move(d string) error {
-	fmt.Println("moving " + d)
+	log.Println("moving " + d)
 	c, err := net.Dial("tcp", h.OnvifIP+":"+h.OnvifPort)
 	if err != nil {
 		return err

@@ -1,7 +1,8 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log"
 	"strconv"
 	"time"
 
@@ -31,12 +32,7 @@ func main() {
 		panic(err)
 	}
 
-	if cfg.CenterCamera != "" {
-		cam := camera.NewCamera(cfg.OnvifIP, cfg.OnvifPort)
-		if err := cam.Centralize(cfg.CenterCamera); err != nil {
-			panic(err)
-		}
-	}
+	cam := camera.NewCamera(cfg.OnvifIP, cfg.OnvifPort)
 
 	enc := encoder.NewEncoder(cfg.InputImage)
 	w, h, err := enc.GetVideoSize()
@@ -46,28 +42,71 @@ func main() {
 
 	vis := vision.NewVision(cfg.CascadePath, w, h)
 
-	pr1, pw1 := io.Pipe()
-	er1, ew1 := io.Pipe()
-
-	ffchan := enc.ReadStream(pw1, ew1)
-	errchan := enc.Catch(er1)
-	cvimg, cvchan := vis.Process(pr1, cfg.CatosoDebug)
-
 	for {
-		select {
-		case ff := <-ffchan:
-			fmt.Println(ff)
-			panic(ff)
-		case cv := <-cvchan:
-			panic(cv)
-		case img := <-cvimg:
-			if err := tel.SendPhoto(chatId, img); err != nil {
+		if cfg.CenterCamera != "" {
+			if err := cam.Centralize(cfg.CenterCamera); err != nil {
 				panic(err)
 			}
-		case err := <-errchan:
-			panic(err)
-		case <-time.After(1 * time.Second):
-			//noop
+		}
+
+		ctx, cancel := context.WithCancel(context.TODO())
+		pr1, pw1 := io.Pipe()
+		er1, ew1 := io.Pipe()
+
+		ffchan := enc.ReadStream(pw1, ew1)
+		errchan := enc.Catch(ctx, er1)
+		cvimg, cvchan := vis.Process(ctx, pr1, cfg.CatosoDebug)
+
+		handlers := 0
+	loop:
+		for {
+			select {
+			case ff := <-ffchan:
+				cancel()
+				if ff != nil {
+					log.Println("ffmpeg error: ", ff)
+				} else {
+					log.Println("ffmpeg finished with nil error")
+				}
+				pw1.Close()
+				ew1.Close()
+				er1.Close()
+				handlers = handlers + 1
+			case cv := <-cvchan:
+				cancel()
+				if cv != nil {
+					log.Println("vision error: ", cv)
+				} else {
+					log.Println("vision finished with nil error")
+				}
+				close(cvimg)
+				pr1.Close()
+				handlers = handlers + 1
+			case img := <-cvimg:
+				if img != nil {
+					if err := tel.SendPhoto(chatId, img); err != nil {
+						cancel()
+						log.Println("SendPhoto error: ", err)
+					}
+				}
+			case err := <-errchan:
+				cancel()
+				if err != nil {
+					log.Println("duplicated frames error: ", err)
+				} else {
+					log.Println("duplicated frames finished with nil error")
+				}
+				er1.Close()
+				handlers = handlers + 1
+			case <-ctx.Done():
+				cancel()
+				if handlers == 3 {
+					log.Println("context is clear")
+					break loop
+				}
+			case <-time.After(1 * time.Second):
+				//noop
+			}
 		}
 	}
 }

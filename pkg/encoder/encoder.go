@@ -1,6 +1,7 @@
 package encoder
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -51,8 +52,6 @@ func (h Encoder) GetVideoSize() (int, int, error) {
 func (h Encoder) ReadStream(stdout io.WriteCloser, stderr io.WriteCloser) chan error {
 	result := make(chan error)
 	go func() {
-		defer stdout.Close()
-		defer stderr.Close()
 		result <- ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": "tcp"}).
 			Output("pipe:",
 				ffmpeg.KwArgs{
@@ -66,7 +65,7 @@ func (h Encoder) ReadStream(stdout io.WriteCloser, stderr io.WriteCloser) chan e
 	return result
 }
 
-func (h Encoder) Catch(er io.Reader) chan error {
+func (h Encoder) Catch(ctx context.Context, er io.Reader) chan error {
 	err := make(chan error)
 	go func() {
 		for {
@@ -75,6 +74,13 @@ func (h Encoder) Catch(er io.Reader) chan error {
 			if strings.Contains(string(buf), "More than 1000 frames duplicated") {
 				err <- errors.New(string(buf))
 				return
+			}
+			select {
+			case <-ctx.Done():
+				err <- errors.New("context cancelled")
+				return
+			default:
+				// no-op
 			}
 		}
 	}()

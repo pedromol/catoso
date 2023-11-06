@@ -1,11 +1,12 @@
 package vision
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"image"
 	"image/color"
 	"io"
+	"log"
 	"time"
 
 	"gocv.io/x/gocv"
@@ -27,7 +28,7 @@ func NewVision(xmlPath string, w int, h int) Vision {
 	}
 }
 
-func (v Vision) Process(reader io.ReadCloser, debug string) (chan []byte, chan error) {
+func (v Vision) Process(ctx context.Context, reader io.ReadCloser, debug string) (chan []byte, chan error) {
 	result := make(chan error)
 	imgchan := make(chan []byte)
 	var win *gocv.Window
@@ -85,7 +86,7 @@ func (v Vision) Process(reader io.ReadCloser, debug string) (chan []byte, chan e
 			}
 
 			if detected > 3 {
-				fmt.Println(Catoso)
+				log.Println(Catoso)
 				lastConfirmed = time.Now().Add(time.Duration(time.Minute * 2))
 				for _, r := range rects {
 					gocv.Rectangle(&img2, r, blue, 3)
@@ -109,6 +110,17 @@ func (v Vision) Process(reader io.ReadCloser, debug string) (chan []byte, chan e
 
 			img.Close()
 			img2.Close()
+
+			select {
+			case <-ctx.Done():
+				if debug != "" {
+					win.Close()
+				}
+				result <- nil
+				return
+			default:
+				// no-op
+			}
 		}
 	}()
 	return imgchan, result
