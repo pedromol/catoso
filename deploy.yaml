@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: catoso
+  labels:
+    name: catoso
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: catoso
+ namespace: catoso
+spec:
+ replicas: 1
+ selector:
+   matchLabels:
+     app: catoso
+ template:
+   metadata:
+     labels:
+       app: catoso
+   spec:
+     containers:
+       - name: catoso
+         image: pedromol/catoso
+         env:
+          - name: TELEGRAM_BOT
+            value: xxxxx
+          - name: TELEGRAM_CHAT
+            value: 'xxxxx'
+          - name: ONVIF_IP
+            value: xxx.xxx.xxx.xxx
+          - name: ONVIF_PORT
+            value: 'xxx'
+          - name: INPUT_IMAGE
+            value: rtsp://xxx.xxx.xxx.xxx:xxxx/xxxx
+          - name: CASCADE_PATH
+            value: /haarcascade_frontalcatface_extended.xml
+          - name: CENTER_CAMERA
+            value: "LEFT=10,DWON=10,RIGHT=5,UP=5"
