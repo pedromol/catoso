@@ -2,6 +2,7 @@ package ffmpeg_go
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -286,4 +287,33 @@ func (s *Stream) Run(options ...CompilationOption) error {
 		}()
 	}
 	return s.Compile(options...).Run()
+}
+
+func (s *Stream) RunCtx(ctx context.Context, options ...CompilationOption) chan error {
+	result := make(chan error)
+	if s.Context.Value("run_hook") != nil {
+		hook := s.Context.Value("run_hook").(*RunHook)
+		go hook.f()
+		defer func() {
+			if hook.closer != nil {
+				_ = hook.closer.Close()
+			}
+			<-hook.done
+		}()
+	}
+	cd := s.Compile(options...)
+	go func() {
+		result <- cd.Run()
+	}()
+	go func() {
+		select {
+		case <-ctx.Done():
+			cd.Process.Kill()
+			result <- errors.New("ffmpeg context canceleed")
+			return
+		default:
+			// no-op
+		}
+	}()
+	return result
 }

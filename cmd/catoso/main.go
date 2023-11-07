@@ -53,7 +53,7 @@ func main() {
 		pr1, pw1 := io.Pipe()
 		er1, ew1 := io.Pipe()
 
-		ffchan := enc.ReadStream(pw1, ew1)
+		ffchan := enc.ReadStream(ctx, pw1, ew1)
 		errchan := enc.Catch(ctx, er1)
 		cvimg, cvchan := vis.Process(ctx, pr1, cfg.CatosoDebug)
 
