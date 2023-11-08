@@ -50,7 +50,7 @@ func (h Encoder) GetVideoSize() (int, int, error) {
 }
 
 func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr io.WriteCloser) chan error {
-	result := ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": "tcp"}).
+	return ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": "tcp"}).
 		Output("pipe:",
 			ffmpeg.KwArgs{
 				"format": "rawvideo", "pix_fmt": "rgb24",
@@ -58,8 +58,6 @@ func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr i
 		WithOutput(stdout).
 		WithErrorOutput(stderr).
 		RunCtx(ctx)
-
-	return result
 }
 
 func (h Encoder) Catch(ctx context.Context, er io.Reader) chan error {

@@ -308,6 +308,7 @@ func (s *Stream) RunCtx(ctx context.Context, options ...CompilationOption) chan 
 	go func() {
 		select {
 		case <-ctx.Done():
+			cd.Process.Signal(os.Kill)
 			cd.Process.Kill()
 			result <- errors.New("ffmpeg context canceleed")
 			return

@@ -92,7 +92,7 @@ func main() {
 			case err := <-errchan:
 				cancel()
 				if err != nil {
-					log.Println("duplicated frames error: ", err)
+					log.Print("duplicated frames error: ", err)
 				} else {
 					log.Println("duplicated frames finished with nil error")
 				}
