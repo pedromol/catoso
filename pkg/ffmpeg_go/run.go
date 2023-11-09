@@ -161,8 +161,6 @@ func (s *Stream) GetArgs() []string {
 	if err != nil {
 		panic(err)
 	}
-	DebugNodes(sorted)
-	DebugOutGoingMap(sorted, outGoingMap)
 	var inputNodes, outputNodes, globalNodes, filterNodes []*Node
 	for i := range sorted {
 		n := sorted[i].(*Node)
@@ -289,7 +287,7 @@ func (s *Stream) Run(options ...CompilationOption) error {
 	return s.Compile(options...).Run()
 }
 
-func (s *Stream) RunCtx(ctx context.Context, options ...CompilationOption) chan error {
+func (s *Stream) RunCtx(ctx context.Context, options ...CompilationOption) (*os.Process, chan error) {
 	result := make(chan error)
 	if s.Context.Value("run_hook") != nil {
 		hook := s.Context.Value("run_hook").(*RunHook)
@@ -316,5 +314,5 @@ func (s *Stream) RunCtx(ctx context.Context, options ...CompilationOption) chan 
 			// no-op
 		}
 	}()
-	return result
+	return cd.Process, result
 }

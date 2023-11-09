@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"io"
@@ -53,8 +54,8 @@ func main() {
 		pr1, pw1 := io.Pipe()
 		er1, ew1 := io.Pipe()
 
-		ffchan := enc.ReadStream(ctx, pw1, ew1)
-		errchan := enc.Catch(ctx, er1)
+		pid, ffchan := enc.ReadStream(ctx, pw1, ew1)
+		errchan := enc.Catch(ctx, er1, pid)
 		cvimg, cvchan := vis.Process(ctx, pr1, cfg.CatosoDebug)
 
 		handlers := 0
@@ -92,7 +93,7 @@ func main() {
 			case err := <-errchan:
 				cancel()
 				if err != nil {
-					log.Print("duplicated frames error: ", err)
+					log.Print("duplicated frames error: ", strings.ReplaceAll(err.Error(), "\n", ""))
 				} else {
 					log.Println("duplicated frames finished with nil error")
 				}

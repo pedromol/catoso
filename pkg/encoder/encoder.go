@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -49,7 +50,7 @@ func (h Encoder) GetVideoSize() (int, int, error) {
 	return 0, 0, errors.New("could not get video size")
 }
 
-func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr io.WriteCloser) chan error {
+func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr io.WriteCloser) (*os.Process, chan error) {
 	return ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": "tcp"}).
 		Output("pipe:",
 			ffmpeg.KwArgs{
@@ -60,21 +61,27 @@ func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr i
 		RunCtx(ctx)
 }
 
-func (h Encoder) Catch(ctx context.Context, er io.Reader) chan error {
+func (h Encoder) Catch(ctx context.Context, er io.Reader, proc *os.Process) chan error {
 	err := make(chan error)
 	go func() {
 		for {
 			buf := make([]byte, 1024)
 			er.Read(buf)
 			if strings.Contains(string(buf), "More than 1000 frames duplicated") {
+				go func() {
+					if proc != nil {
+						proc.Kill()
+					}
+				}()
 				err <- errors.New(string(buf))
+
 				return
 			}
 			select {
 			case <-ctx.Done():
 				err <- errors.New("context cancelled")
 				return
-			default:
+			case <-time.After(1 * time.Second):
 				// no-op
 			}
 		}
