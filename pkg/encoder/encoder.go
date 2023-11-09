@@ -50,12 +50,15 @@ func (h Encoder) GetVideoSize() (int, int, error) {
 	return 0, 0, errors.New("could not get video size")
 }
 
-func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr io.WriteCloser) (*os.Process, chan error) {
+func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr io.WriteCloser, fps string) (*os.Process, chan error) {
+	var output ffmpeg.KwArgs
+	if fps != "" {
+		output = ffmpeg.KwArgs{"filter:v": "fps=" + fps, "format": "rawvideo", "pix_fmt": "rgb24"}
+	} else {
+		output = ffmpeg.KwArgs{"format": "rawvideo", "pix_fmt": "rgb24"}
+	}
 	return ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": "tcp"}).
-		Output("pipe:",
-			ffmpeg.KwArgs{
-				"format": "rawvideo", "pix_fmt": "rgb24",
-			}).
+		Output("pipe:", output).
 		WithOutput(stdout).
 		WithErrorOutput(stderr).
 		RunCtx(ctx)

@@ -38,3 +38,5 @@ spec:
             value: /haarcascade_frontalcatface_extended.xml
           - name: CENTER_CAMERA
             value: "LEFT=10,DWON=10,RIGHT=5,UP=5"
+          - name: INPUT_FPS
+            value: '15'

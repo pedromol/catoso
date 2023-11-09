@@ -11,6 +11,7 @@ type Config struct {
 	OnvifIP       string `mapstructure:"ONVIF_IP"`
 	OnvifPort     string `mapstructure:"ONVIF_PORT"`
 	InputImage    string `mapstructure:"INPUT_IMAGE"`
+	InputFps      string `mapstructure:"INPUT_FPS"`
 	CascadePath   string `mapstructure:"CASCADE_PATH"`
 	CenterCamera  string `mapstructure:"CENTER_CAMERA"`
 	CatosoDebug   string `mapstructure:"CATOSO_DEBUG"`
@@ -26,6 +27,7 @@ func NewConfig() (Config, error) {
 		CascadePath:   os.Getenv("CASCADE_PATH"),
 		CenterCamera:  os.Getenv("CENTER_CAMERA"),
 		CatosoDebug:   os.Getenv("CATOSO_DEBUG"),
+		InputFps:      os.Getenv("INPUT_FPS"),
 	}
 
 	if cfg.TelegramToken == "" {
@@ -34,17 +36,24 @@ func NewConfig() (Config, error) {
 	if cfg.TelegramChat == "" {
 		return cfg, errors.New("missing TELEGRAM_CHAT env")
 	}
-	if cfg.OnvifIP == "" {
-		return cfg, errors.New("missing ONVIF_IP env")
-	}
-	if cfg.OnvifPort == "" {
-		return cfg, errors.New("missing ONVIF_PORT env")
+	if cfg.CenterCamera != "" {
+		if cfg.OnvifIP == "" {
+			return cfg, errors.New("missing ONVIF_IP env")
+		}
+		if cfg.OnvifPort == "" {
+			return cfg, errors.New("missing ONVIF_PORT env")
+		}
 	}
 	if cfg.InputImage == "" {
 		return cfg, errors.New("missing INPUT_IMAGE env")
 	}
 	if cfg.CascadePath == "" {
 		return cfg, errors.New("missing CASCADE_PATH env")
+	}
+
+	_, err := os.Stat(cfg.CascadePath)
+	if err != nil {
+		return cfg, err
 	}
 
 	return cfg, nil
