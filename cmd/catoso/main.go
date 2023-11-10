@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -43,6 +44,24 @@ func main() {
 
 	vis := vision.NewVision(cfg.CascadePath, w, h)
 
+	var st *vision.Stream
+	if cfg.StreamPort != "" {
+		st = vision.NewStream()
+
+		http.Handle("/", st)
+
+		server := &http.Server{
+			Addr:         "0.0.0.0:" + cfg.StreamPort,
+			ReadTimeout:  60 * time.Second,
+			WriteTimeout: 60 * time.Second,
+		}
+
+		defer server.Close()
+		go func() {
+			panic(server.ListenAndServe())
+		}()
+	}
+
 	for {
 		if cfg.CenterCamera != "" {
 			if err := cam.Centralize(cfg.CenterCamera); err != nil {
@@ -56,7 +75,7 @@ func main() {
 
 		pid, ffchan := enc.ReadStream(ctx, pw1, ew1, cfg.InputFps)
 		errchan := enc.Catch(ctx, er1, pid)
-		cvimg, cvchan := vis.Process(ctx, pr1, cfg.CatosoDebug)
+		cvimg, cvchan := vis.Process(ctx, pr1, st, cfg.CatosoDebug)
 
 		handlers := 0
 	loop:

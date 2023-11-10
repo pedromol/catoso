@@ -15,6 +15,7 @@ type Config struct {
 	CascadePath   string `mapstructure:"CASCADE_PATH"`
 	CenterCamera  string `mapstructure:"CENTER_CAMERA"`
 	CatosoDebug   string `mapstructure:"CATOSO_DEBUG"`
+	StreamPort    string `mapstructure:"STREAM_PORT"`
 }
 
 func NewConfig() (Config, error) {
@@ -28,6 +29,7 @@ func NewConfig() (Config, error) {
 		CenterCamera:  os.Getenv("CENTER_CAMERA"),
 		CatosoDebug:   os.Getenv("CATOSO_DEBUG"),
 		InputFps:      os.Getenv("INPUT_FPS"),
+		StreamPort:    os.Getenv("STREAM_PORT"),
 	}
 
 	if cfg.TelegramToken == "" {

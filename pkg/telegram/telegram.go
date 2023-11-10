@@ -30,6 +30,16 @@ func (t Telegram) SendPhoto(chatId int64, img []byte) error {
 	return err
 }
 
+func (t Telegram) SendVideo(chatId int64, video []byte) error {
+	file := tgbotapi.FileBytes{
+		Name:  t.randomString(6) + ".mp4",
+		Bytes: video,
+	}
+	msg := tgbotapi.NewVideo(chatId, file)
+	_, err := t.bot.Send(msg)
+	return err
+}
+
 func NewTelegram(token string) (Telegram, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {

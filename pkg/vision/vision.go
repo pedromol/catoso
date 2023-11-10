@@ -28,7 +28,7 @@ func NewVision(xmlPath string, w int, h int) Vision {
 	}
 }
 
-func (v Vision) Process(ctx context.Context, reader io.ReadCloser, debug string) (chan []byte, chan error) {
+func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stream, debug string) (chan []byte, chan error) {
 	result := make(chan error)
 	imgchan := make(chan []byte)
 	var win *gocv.Window
@@ -61,7 +61,7 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, debug string)
 				break
 			}
 
-			if lastConfirmed.After(time.Now()) {
+			if lastConfirmed.After(time.Now()) && stream == nil {
 				continue
 			}
 
@@ -74,13 +74,25 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, debug string)
 				img.Close()
 				continue
 			}
+
 			img2 := gocv.NewMat()
 
 			gocv.CvtColor(img, &img2, gocv.ColorBGRToRGB)
 
+			if stream != nil {
+				buf, _ := gocv.IMEncode(gocv.JPEGFileExt, img2)
+				stream.UpdateJPEG(buf.GetBytes())
+				buf.Close()
+			}
+
+			if lastConfirmed.After(time.Now()) {
+				continue
+			}
+
 			rects := classifier.DetectMultiScale(img2)
 			if len(rects) > 0 {
 				detected += 1
+				log.Println("possible " + Catoso)
 			} else {
 				detected = 0
 			}
