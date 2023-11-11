@@ -62,6 +62,14 @@ func main() {
 		}()
 	}
 
+	fskip := 0
+	if cfg.OutputFrameSkip != "" {
+		fskip, err = strconv.Atoi(cfg.OutputFrameSkip)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	for {
 		if cfg.CenterCamera != "" {
 			if err := cam.Centralize(cfg.CenterCamera); err != nil {
@@ -75,7 +83,7 @@ func main() {
 
 		pid, ffchan := enc.ReadStream(ctx, pw1, ew1, cfg.InputFps)
 		errchan := enc.Catch(ctx, er1, pid)
-		cvimg, cvchan := vis.Process(ctx, pr1, st, cfg.CatosoDebug)
+		cvimg, cvchan := vis.Process(ctx, pr1, st, fskip, cfg.CatosoDebug)
 
 		handlers := 0
 	loop:

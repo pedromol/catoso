@@ -28,7 +28,7 @@ func NewVision(xmlPath string, w int, h int) Vision {
 	}
 }
 
-func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stream, debug string) (chan []byte, chan error) {
+func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stream, frameskip int, debug string) (chan []byte, chan error) {
 	result := make(chan error)
 	imgchan := make(chan []byte)
 	var win *gocv.Window
@@ -51,6 +51,7 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 
 		frameSize := v.Width * v.Height * 3
 		buf := make([]byte, frameSize)
+		cf := 0
 		for {
 			n, err := io.ReadFull(reader, buf)
 			if n == 0 || err == io.EOF {
@@ -60,6 +61,12 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 				result <- err
 				break
 			}
+
+			cf += 1
+			if cf < frameskip {
+				continue
+			}
+			cf = 0
 
 			if lastConfirmed.After(time.Now()) && stream == nil {
 				continue
@@ -92,7 +99,6 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 			rects := classifier.DetectMultiScale(img2)
 			if len(rects) > 0 {
 				detected += 1
-				log.Println("possible " + Catoso)
 			} else {
 				detected = 0
 			}

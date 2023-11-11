@@ -69,7 +69,17 @@ func (h Encoder) Catch(ctx context.Context, er io.Reader, proc *os.Process) chan
 	go func() {
 		for {
 			buf := make([]byte, 1024)
-			er.Read(buf)
+			_, er := er.Read(buf)
+			if er != nil {
+				go func() {
+					if proc != nil {
+						proc.Kill()
+					}
+				}()
+				err <- er
+
+				return
+			}
 			if strings.Contains(string(buf), "More than 1000 frames duplicated") {
 				go func() {
 					if proc != nil {

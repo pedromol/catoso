@@ -6,30 +6,32 @@ import (
 )
 
 type Config struct {
-	TelegramToken string `mapstructure:"TELEGRAM_BOT"`
-	TelegramChat  string `mapstructure:"TELEGRAM_CHAT"`
-	OnvifIP       string `mapstructure:"ONVIF_IP"`
-	OnvifPort     string `mapstructure:"ONVIF_PORT"`
-	InputImage    string `mapstructure:"INPUT_IMAGE"`
-	InputFps      string `mapstructure:"INPUT_FPS"`
-	CascadePath   string `mapstructure:"CASCADE_PATH"`
-	CenterCamera  string `mapstructure:"CENTER_CAMERA"`
-	CatosoDebug   string `mapstructure:"CATOSO_DEBUG"`
-	StreamPort    string `mapstructure:"STREAM_PORT"`
+	TelegramToken   string `mapstructure:"TELEGRAM_BOT"`
+	TelegramChat    string `mapstructure:"TELEGRAM_CHAT"`
+	OnvifIP         string `mapstructure:"ONVIF_IP"`
+	OnvifPort       string `mapstructure:"ONVIF_PORT"`
+	InputImage      string `mapstructure:"INPUT_IMAGE"`
+	InputFps        string `mapstructure:"INPUT_FPS"`
+	CascadePath     string `mapstructure:"CASCADE_PATH"`
+	CenterCamera    string `mapstructure:"CENTER_CAMERA"`
+	CatosoDebug     string `mapstructure:"CATOSO_DEBUG"`
+	StreamPort      string `mapstructure:"STREAM_PORT"`
+	OutputFrameSkip string `mapstructure:"OUTPUT_FRAMESKIP"`
 }
 
 func NewConfig() (Config, error) {
 	cfg := Config{
-		TelegramToken: os.Getenv("TELEGRAM_BOT"),
-		TelegramChat:  os.Getenv("TELEGRAM_CHAT"),
-		OnvifIP:       os.Getenv("ONVIF_IP"),
-		OnvifPort:     os.Getenv("ONVIF_PORT"),
-		InputImage:    os.Getenv("INPUT_IMAGE"),
-		CascadePath:   os.Getenv("CASCADE_PATH"),
-		CenterCamera:  os.Getenv("CENTER_CAMERA"),
-		CatosoDebug:   os.Getenv("CATOSO_DEBUG"),
-		InputFps:      os.Getenv("INPUT_FPS"),
-		StreamPort:    os.Getenv("STREAM_PORT"),
+		TelegramToken:   os.Getenv("TELEGRAM_BOT"),
+		TelegramChat:    os.Getenv("TELEGRAM_CHAT"),
+		OnvifIP:         os.Getenv("ONVIF_IP"),
+		OnvifPort:       os.Getenv("ONVIF_PORT"),
+		InputImage:      os.Getenv("INPUT_IMAGE"),
+		CascadePath:     os.Getenv("CASCADE_PATH"),
+		CenterCamera:    os.Getenv("CENTER_CAMERA"),
+		CatosoDebug:     os.Getenv("CATOSO_DEBUG"),
+		InputFps:        os.Getenv("INPUT_FPS"),
+		StreamPort:      os.Getenv("STREAM_PORT"),
+		OutputFrameSkip: os.Getenv("OUTPUT_FRAMESKIP"),
 	}
 
 	if cfg.TelegramToken == "" {
