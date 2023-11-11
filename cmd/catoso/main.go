@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"io"
@@ -115,16 +115,16 @@ func main() {
 			case err := <-errchan:
 				cancel()
 				if err != nil {
-					log.Print("duplicated frames error: ", strings.ReplaceAll(err.Error(), "\n", ""))
+					log.Print("duplicated frames error: ", err)
 				} else {
 					log.Println("duplicated frames finished with nil error")
 				}
 				handlers = handlers + 1
 			case <-ctx.Done():
-				pw1.Close()
-				ew1.Close()
-				er1.Close()
-				pr1.Close()
+				pw1.CloseWithError(errors.New("context cancelled"))
+				ew1.CloseWithError(errors.New("context cancelled"))
+				er1.CloseWithError(errors.New("context cancelled"))
+				pr1.CloseWithError(errors.New("context cancelled"))
 				if handlers == 3 {
 					log.Println("context is clear")
 					break loop

@@ -71,12 +71,11 @@ func (h Encoder) Catch(ctx context.Context, er io.Reader) chan error {
 			_, er := er.Read(buf)
 			if er != nil {
 				err <- er
-
 				return
 			}
-			if strings.Contains(string(buf), "More than 1000 frames duplicated") {
-				err <- errors.New(string(buf))
 
+			if strings.Contains(string(buf), "More than 1000 frames duplicated") {
+				err <- errors.New(strings.ReplaceAll(string(buf), "\n", ""))
 				return
 			}
 

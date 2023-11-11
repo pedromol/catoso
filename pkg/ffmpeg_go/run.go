@@ -2,7 +2,6 @@ package ffmpeg_go
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -294,15 +293,16 @@ func (s *Stream) RunCtx(ctx context.Context, options ...CompilationOption) chan 
 		result <- s.Run()
 	}()
 	go func() {
-		select {
-		case <-ctx.Done():
-			_, cancel := context.WithCancel(s.Context)
-			cancel()
-			s.Cmd.Process.Kill()
-			result <- errors.New("ffmpeg context canceled")
-			return
-		case <-time.After(1 * time.Second):
-			// no-op
+		for {
+			select {
+			case <-ctx.Done():
+				_, cancel := context.WithCancel(s.Context)
+				cancel()
+				s.Cmd.Process.Kill()
+				return
+			case <-time.After(1 * time.Second):
+				// no-op
+			}
 		}
 	}()
 	return result
