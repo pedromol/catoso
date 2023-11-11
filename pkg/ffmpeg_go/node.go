@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 )
 
@@ -14,6 +15,7 @@ type Stream struct {
 	Type       string
 	FfmpegPath string
 	Context    context.Context
+	Cmd        *exec.Cmd
 }
 
 type RunHook struct {

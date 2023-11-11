@@ -284,35 +284,26 @@ func (s *Stream) Run(options ...CompilationOption) error {
 			<-hook.done
 		}()
 	}
-	return s.Compile(options...).Run()
+	s.Cmd = s.Compile(options...)
+	return s.Cmd.Run()
 }
 
-func (s *Stream) RunCtx(ctx context.Context, options ...CompilationOption) (*os.Process, chan error) {
+func (s *Stream) RunCtx(ctx context.Context, options ...CompilationOption) chan error {
 	result := make(chan error)
-	if s.Context.Value("run_hook") != nil {
-		hook := s.Context.Value("run_hook").(*RunHook)
-		go hook.f()
-		defer func() {
-			if hook.closer != nil {
-				_ = hook.closer.Close()
-			}
-			<-hook.done
-		}()
-	}
-	cd := s.Compile(options...)
 	go func() {
-		result <- cd.Run()
+		result <- s.Run()
 	}()
 	go func() {
 		select {
 		case <-ctx.Done():
-			cd.Process.Signal(os.Kill)
-			cd.Process.Kill()
-			result <- errors.New("ffmpeg context canceleed")
+			_, cancel := context.WithCancel(s.Context)
+			cancel()
+			s.Cmd.Process.Kill()
+			result <- errors.New("ffmpeg context canceled")
 			return
-		default:
+		case <-time.After(1 * time.Second):
 			// no-op
 		}
 	}()
-	return cd.Process, result
+	return result
 }

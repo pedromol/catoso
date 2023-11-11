@@ -53,6 +53,17 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 		buf := make([]byte, frameSize)
 		cf := 0
 		for {
+			select {
+			case <-ctx.Done():
+				if debug != "" {
+					win.Close()
+				}
+				result <- nil
+				return
+			default:
+				// no-op
+			}
+
 			n, err := io.ReadFull(reader, buf)
 			if n == 0 || err == io.EOF {
 				result <- errors.New("EOF")
@@ -128,17 +139,6 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 
 			img.Close()
 			img2.Close()
-
-			select {
-			case <-ctx.Done():
-				if debug != "" {
-					win.Close()
-				}
-				result <- nil
-				return
-			default:
-				// no-op
-			}
 		}
 	}()
 	return imgchan, result

@@ -18,7 +18,6 @@ import (
 )
 
 func main() {
-
 	cfg, err := config.NewConfig()
 	if err != nil {
 		panic(err)
@@ -81,8 +80,8 @@ func main() {
 		pr1, pw1 := io.Pipe()
 		er1, ew1 := io.Pipe()
 
-		pid, ffchan := enc.ReadStream(ctx, pw1, ew1, cfg.InputFps)
-		errchan := enc.Catch(ctx, er1, pid)
+		ffchan := enc.ReadStream(ctx, pw1, ew1, cfg.InputFps)
+		errchan := enc.Catch(ctx, er1)
 		cvimg, cvchan := vis.Process(ctx, pr1, st, fskip, cfg.CatosoDebug)
 
 		handlers := 0
@@ -96,9 +95,6 @@ func main() {
 				} else {
 					log.Println("ffmpeg finished with nil error")
 				}
-				pw1.Close()
-				ew1.Close()
-				er1.Close()
 				handlers = handlers + 1
 			case cv := <-cvchan:
 				cancel()
@@ -108,7 +104,6 @@ func main() {
 					log.Println("vision finished with nil error")
 				}
 				close(cvimg)
-				pr1.Close()
 				handlers = handlers + 1
 			case img := <-cvimg:
 				if img != nil {
@@ -124,10 +119,12 @@ func main() {
 				} else {
 					log.Println("duplicated frames finished with nil error")
 				}
-				er1.Close()
 				handlers = handlers + 1
 			case <-ctx.Done():
-				cancel()
+				pw1.Close()
+				ew1.Close()
+				er1.Close()
+				pr1.Close()
 				if handlers == 3 {
 					log.Println("context is clear")
 					break loop
