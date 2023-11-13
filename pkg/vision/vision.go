@@ -85,10 +85,12 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 
 			img, err := gocv.NewMatFromBytes(v.Height, v.Width, gocv.MatTypeCV8UC3, buf)
 			if err != nil {
+				log.Println("NewMatFromBytes error: " + err.Error())
 				continue
 			}
 
 			if img.Empty() {
+				log.Println("img.Empty")
 				img.Close()
 				continue
 			}
@@ -104,6 +106,8 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 			}
 
 			if lastConfirmed.After(time.Now()) {
+				img.Close()
+				img2.Close()
 				continue
 			}
 
@@ -126,11 +130,14 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 				}
 				buff, err := gocv.IMEncode(gocv.JPEGFileExt, img2)
 				if err != nil {
+					img.Close()
+					img2.Close()
 					result <- err
 					return
 				}
 
 				imgchan <- buff.GetBytes()
+				buff.Close()
 			}
 			if debug != "" {
 				win.IMShow(img2)
