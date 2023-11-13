@@ -40,13 +40,13 @@ func (t Telegram) SendVideo(chatId int64, video []byte) error {
 	return err
 }
 
-func NewTelegram(token string) (Telegram, error) {
+func NewTelegram(token string) (*Telegram, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		return Telegram{}, err
+		return nil, err
 	}
 
-	return Telegram{
+	return &Telegram{
 		bot: bot,
 	}, nil
 }

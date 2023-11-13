@@ -20,20 +20,21 @@ type Vision struct {
 	Height  int
 }
 
-func NewVision(xmlPath string, w int, h int) Vision {
-	return Vision{
+func NewVision(xmlPath string, w int, h int) *Vision {
+	return &Vision{
 		XmlFile: xmlPath,
 		Width:   w,
 		Height:  h,
 	}
 }
 
-func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stream, frameskip int, debug string) (chan []byte, chan error) {
+func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stream, frameskip int, debug string) (chan []byte, chan error) {
 	result := make(chan error)
 	imgchan := make(chan []byte)
 	var win *gocv.Window
 	if debug != "" {
 		win = gocv.NewWindow(Catoso)
+		defer win.Close()
 	}
 	go func() {
 		detected := 0
@@ -55,9 +56,6 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 		for {
 			select {
 			case <-ctx.Done():
-				if debug != "" {
-					win.Close()
-				}
 				result <- nil
 				return
 			default:
@@ -139,7 +137,7 @@ func (v Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Strea
 				imgchan <- buff.GetBytes()
 				buff.Close()
 			}
-			if debug != "" {
+			if win != nil {
 				win.IMShow(img2)
 				win.WaitKey(10)
 			}

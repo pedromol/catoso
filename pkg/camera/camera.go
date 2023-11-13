@@ -26,8 +26,8 @@ type Camera struct {
 	OnvifPort string
 }
 
-func NewCamera(ip string, port string) Camera {
-	return Camera{
+func NewCamera(ip string, port string) *Camera {
+	return &Camera{
 		OnvifIP:   ip,
 		OnvifPort: port,
 	}

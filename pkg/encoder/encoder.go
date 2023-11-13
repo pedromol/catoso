@@ -23,8 +23,8 @@ type Encoder struct {
 	InputImage string
 }
 
-func NewEncoder(input string) Encoder {
-	return Encoder{
+func NewEncoder(input string) *Encoder {
+	return &Encoder{
 		InputImage: input,
 	}
 }

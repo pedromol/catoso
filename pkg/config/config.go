@@ -6,22 +6,22 @@ import (
 )
 
 type Config struct {
-	TelegramToken   string `mapstructure:"TELEGRAM_BOT"`
-	TelegramChat    string `mapstructure:"TELEGRAM_CHAT"`
-	OnvifIP         string `mapstructure:"ONVIF_IP"`
-	OnvifPort       string `mapstructure:"ONVIF_PORT"`
-	InputImage      string `mapstructure:"INPUT_IMAGE"`
-	InputFps        string `mapstructure:"INPUT_FPS"`
-	CascadePath     string `mapstructure:"CASCADE_PATH"`
-	CenterCamera    string `mapstructure:"CENTER_CAMERA"`
-	CatosoDebug     string `mapstructure:"CATOSO_DEBUG"`
-	StreamPort      string `mapstructure:"STREAM_PORT"`
-	OutputFrameSkip string `mapstructure:"OUTPUT_FRAMESKIP"`
+	TelegramToken   string
+	TelegramChat    string
+	OnvifIP         string
+	OnvifPort       string
+	InputImage      string
+	InputFps        string
+	CascadePath     string
+	CenterCamera    string
+	CatosoDebug     string
+	StreamPort      string
+	OutputFrameSkip string
 }
 
-func NewConfig() (Config, error) {
+func NewConfig() (*Config, error) {
 	cfg := Config{
-		TelegramToken:   os.Getenv("TELEGRAM_BOT"),
+		TelegramToken:   os.Getenv("TELEGRAM_TOKEN"),
 		TelegramChat:    os.Getenv("TELEGRAM_CHAT"),
 		OnvifIP:         os.Getenv("ONVIF_IP"),
 		OnvifPort:       os.Getenv("ONVIF_PORT"),
@@ -35,30 +35,30 @@ func NewConfig() (Config, error) {
 	}
 
 	if cfg.TelegramToken == "" {
-		return cfg, errors.New("missing TELEGRAM_BOT env")
+		return nil, errors.New("missing TELEGRAM_TOKEN env")
 	}
 	if cfg.TelegramChat == "" {
-		return cfg, errors.New("missing TELEGRAM_CHAT env")
+		return nil, errors.New("missing TELEGRAM_CHAT env")
 	}
 	if cfg.CenterCamera != "" {
 		if cfg.OnvifIP == "" {
-			return cfg, errors.New("missing ONVIF_IP env")
+			return nil, errors.New("missing ONVIF_IP env")
 		}
 		if cfg.OnvifPort == "" {
-			return cfg, errors.New("missing ONVIF_PORT env")
+			return nil, errors.New("missing ONVIF_PORT env")
 		}
 	}
 	if cfg.InputImage == "" {
-		return cfg, errors.New("missing INPUT_IMAGE env")
+		return nil, errors.New("missing INPUT_IMAGE env")
 	}
 	if cfg.CascadePath == "" {
-		return cfg, errors.New("missing CASCADE_PATH env")
+		return nil, errors.New("missing CASCADE_PATH env")
 	}
 
 	_, err := os.Stat(cfg.CascadePath)
 	if err != nil {
-		return cfg, err
+		return nil, err
 	}
 
-	return cfg, nil
+	return &cfg, nil
 }

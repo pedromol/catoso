@@ -24,7 +24,7 @@ spec:
        - name: catoso
          image: pedromol/catoso
          env:
-          - name: TELEGRAM_BOT
+          - name: TELEGRAM_TOKEN
             value: xxxxx
           - name: TELEGRAM_CHAT
             value: 'xxxxx'
