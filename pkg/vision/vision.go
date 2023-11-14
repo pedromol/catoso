@@ -109,7 +109,7 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 
 			if stream != nil {
 				buf, err := gocv.IMEncode(gocv.JPEGFileExt, img2)
-				if err != nil {
+				if err == nil {
 					stream.UpdateJPEG(buf.GetBytes())
 					buf.Close()
 				}
