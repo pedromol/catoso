@@ -5,6 +5,7 @@ import (
 	"errors"
 	"image"
 	"image/color"
+
 	"io"
 	"log"
 	"time"
@@ -15,24 +16,32 @@ import (
 const Catoso = "Catoso"
 
 type Vision struct {
-	XmlFile string
-	Width   int
-	Height  int
+	XmlFile             string
+	Width               int
+	Height              int
+	DelayAfterDetectMin int64
+	Frameskip           int
+	Debug               bool
+	DrawOverFace        bool
 }
 
-func NewVision(xmlPath string, w int, h int) *Vision {
+func NewVision(xmlPath string, w int, h int, delay int64, fskip int, debug bool, draw bool) *Vision {
 	return &Vision{
-		XmlFile: xmlPath,
-		Width:   w,
-		Height:  h,
+		XmlFile:             xmlPath,
+		Width:               w,
+		Height:              h,
+		DelayAfterDetectMin: delay,
+		Frameskip:           fskip,
+		Debug:               debug,
+		DrawOverFace:        draw,
 	}
 }
 
-func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stream, frameskip int, debug string) (chan []byte, chan error) {
+func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stream) (chan []byte, chan error) {
 	result := make(chan error)
 	imgchan := make(chan []byte)
 	var win *gocv.Window
-	if debug != "" {
+	if v.Debug {
 		win = gocv.NewWindow(Catoso)
 		defer win.Close()
 	}
@@ -72,7 +81,7 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 			}
 
 			cf += 1
-			if cf < frameskip {
+			if cf < v.Frameskip {
 				continue
 			}
 			cf = 0
@@ -96,15 +105,17 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 			img2 := gocv.NewMat()
 
 			gocv.CvtColor(img, &img2, gocv.ColorBGRToRGB)
+			img.Close()
 
 			if stream != nil {
-				buf, _ := gocv.IMEncode(gocv.JPEGFileExt, img2)
-				stream.UpdateJPEG(buf.GetBytes())
-				buf.Close()
+				buf, err := gocv.IMEncode(gocv.JPEGFileExt, img2)
+				if err != nil {
+					stream.UpdateJPEG(buf.GetBytes())
+					buf.Close()
+				}
 			}
 
 			if lastConfirmed.After(time.Now()) {
-				img.Close()
 				img2.Close()
 				continue
 			}
@@ -118,17 +129,17 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 
 			if detected > 3 {
 				log.Println(Catoso)
-				lastConfirmed = time.Now().Add(time.Duration(time.Minute * 2))
-				for _, r := range rects {
-					gocv.Rectangle(&img2, r, blue, 3)
-
-					size := gocv.GetTextSize(Catoso, gocv.FontHersheyPlain, 1.2, 2)
-					pt := image.Pt(r.Min.X+(r.Min.X/2)-(size.X/2), r.Min.Y-2)
-					gocv.PutText(&img2, Catoso, pt, gocv.FontHersheyPlain, 1.2, blue, 2)
+				lastConfirmed = time.Now().Add(time.Minute * time.Duration(v.DelayAfterDetectMin))
+				if v.DrawOverFace {
+					for _, r := range rects {
+						gocv.Rectangle(&img2, r, blue, 3)
+						size := gocv.GetTextSize(Catoso, gocv.FontHersheyPlain, 1.2, 2)
+						pt := image.Pt(r.Min.X+(r.Min.X/2)-(size.X/2), r.Min.Y-2)
+						gocv.PutText(&img2, Catoso, pt, gocv.FontHersheyPlain, 1.2, blue, 2)
+					}
 				}
 				buff, err := gocv.IMEncode(gocv.JPEGFileExt, img2)
 				if err != nil {
-					img.Close()
 					img2.Close()
 					result <- err
 					return
@@ -142,7 +153,6 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 				win.WaitKey(10)
 			}
 
-			img.Close()
 			img2.Close()
 		}
 	}()

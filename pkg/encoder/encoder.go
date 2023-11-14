@@ -21,11 +21,13 @@ type VideoInfo struct {
 
 type Encoder struct {
 	InputImage string
+	Fps        string
 }
 
-func NewEncoder(input string) *Encoder {
+func NewEncoder(input string, fps string) *Encoder {
 	return &Encoder{
 		InputImage: input,
+		Fps:        fps,
 	}
 }
 
@@ -49,10 +51,10 @@ func (h Encoder) GetVideoSize() (int, int, error) {
 	return 0, 0, errors.New("could not get video size")
 }
 
-func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr io.WriteCloser, fps string) chan error {
+func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr io.WriteCloser) chan error {
 	var output ffmpeg.KwArgs
-	if fps != "" {
-		output = ffmpeg.KwArgs{"filter:v": "fps=" + fps, "format": "rawvideo", "pix_fmt": "rgb24"}
+	if h.Fps != "" {
+		output = ffmpeg.KwArgs{"filter:v": "fps=" + h.Fps, "format": "rawvideo", "pix_fmt": "rgb24"}
 	} else {
 		output = ffmpeg.KwArgs{"format": "rawvideo", "pix_fmt": "rgb24"}
 	}
