@@ -13,6 +13,7 @@ import (
 	"github.com/pedromol/catoso/pkg/camera"
 	"github.com/pedromol/catoso/pkg/config"
 	"github.com/pedromol/catoso/pkg/encoder"
+	"github.com/pedromol/catoso/pkg/queue"
 	"github.com/pedromol/catoso/pkg/telegram"
 	"github.com/pedromol/catoso/pkg/vision"
 )
@@ -25,6 +26,7 @@ type Catoso struct {
 	Encoder  *encoder.Encoder
 	Vision   *vision.Vision
 	Stream   *vision.Stream
+	Queue    *queue.Queue
 	Context  context.Context
 	Cancel   context.CancelFunc
 	Handlers int
@@ -95,6 +97,15 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 		}()
 	}
 
+	var q *queue.Queue
+	if cfg.AmqpConnection != "" {
+		q = queue.NewQueue(cfg.AmqpConnection, cfg.AmqpTopic)
+		err = q.Connect()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &Catoso{
 		Config:   cfg,
 		Telegram: tel,
@@ -103,6 +114,7 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 		Encoder:  enc,
 		Vision:   vis,
 		Stream:   st,
+		Queue:    q,
 	}, nil
 
 }
@@ -146,9 +158,17 @@ func (h *Catoso) Start() {
 				h.Handlers += 1
 			case img := <-cvimg:
 				if img != nil {
-					if err := h.Telegram.SendPhoto(h.ChatId, img); err != nil {
+					dest := make([]byte, len(img))
+					copy(dest, img)
+					if err := h.Telegram.SendPhoto(h.ChatId, dest); err != nil {
 						h.Cancel()
 						log.Println("SendPhoto error: ", err)
+					}
+					if h.Queue != nil {
+						if err := h.Queue.Send(h.Context, dest); err != nil {
+							h.Cancel()
+							log.Println("Queue.Send error: ", err)
+						}
 					}
 				}
 			case err := <-errchan:

@@ -20,6 +20,8 @@ type Config struct {
 	DelayAfterDetectMin string `json:"delayAfterDetectMin"`
 	DrawOverFace        string `json:"drawOverFace"`
 	ExitAfterMin        string `json:"exitAfterMin"`
+	AmqpConnection      string `json:"-"`
+	AmqpTopic           string `json:"amqpTopic"`
 }
 
 func NewConfig() (*Config, error) {
@@ -38,6 +40,8 @@ func NewConfig() (*Config, error) {
 		DelayAfterDetectMin: os.Getenv("DELAY_AFTER_DETECT_MIN"),
 		DrawOverFace:        os.Getenv("DRAW_OVER_FACE"),
 		ExitAfterMin:        os.Getenv("EXIT_AFTER_MIN"),
+		AmqpConnection:      os.Getenv("AMQP_CONNECTION"),
+		AmqpTopic:           os.Getenv("AMQP_TOPIC"),
 	}
 
 	if cfg.InputImage == "" {

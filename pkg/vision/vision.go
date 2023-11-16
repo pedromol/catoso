@@ -128,6 +128,7 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 			}
 
 			if detected > 3 {
+				detected = 0
 				log.Println(Catoso)
 				lastConfirmed = time.Now().Add(time.Minute * time.Duration(v.DelayAfterDetectMin))
 				if v.DrawOverFace {

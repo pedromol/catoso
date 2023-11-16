@@ -40,3 +40,7 @@ spec:
             value: "LEFT=10,DWON=10,RIGHT=5,UP=5"
           - name: INPUT_FPS
             value: '15'
+          - name: AMQP_CONNECTION
+            value: 'amqp://username:password@xxx.xxx.xxx.xxx:5672/'
+          - name: AMQP_TOPIC
+            value: 'catoso'
