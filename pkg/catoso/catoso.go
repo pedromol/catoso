@@ -102,7 +102,7 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 		q = queue.NewQueue(cfg.AmqpConnection, cfg.AmqpTopic)
 		err = q.Connect()
 		if err != nil {
-			return nil, err
+			log.Printf("failed to connect amqp: %s", err)
 		}
 	}
 
@@ -160,14 +160,19 @@ func (h *Catoso) Start() {
 				if img != nil {
 					dest := make([]byte, len(img))
 					copy(dest, img)
-					if err := h.Telegram.SendPhoto(h.ChatId, dest); err != nil {
-						h.Cancel()
-						log.Println("SendPhoto error: ", err)
-					}
+
 					if h.Queue != nil {
 						if err := h.Queue.Send(h.Context, dest); err != nil {
+							log.Println("Queue.Send error failing back: ", err)
+							if err := h.Telegram.SendPhoto(h.ChatId, dest); err != nil {
+								h.Cancel()
+								log.Println("SendPhoto error: ", err)
+							}
+						}
+					} else {
+						if err := h.Telegram.SendPhoto(h.ChatId, dest); err != nil {
 							h.Cancel()
-							log.Println("Queue.Send error: ", err)
+							log.Println("SendPhoto error: ", err)
 						}
 					}
 				}
