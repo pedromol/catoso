@@ -146,8 +146,14 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 					return
 				}
 
-				imgchan <- buff.GetBytes()
+				bb := buff.GetBytes()
+
+				cpy := make([]byte, len(bb))
+				copy(cpy, bb)
+
+				imgchan <- cpy
 				buff.Close()
+				bb = nil
 			}
 			if win != nil {
 				win.IMShow(img2)

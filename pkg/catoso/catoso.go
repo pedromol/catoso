@@ -153,18 +153,13 @@ func (h *Catoso) Start() {
 				close(cvimg)
 				h.Handlers += 1
 			case img := <-cvimg:
-				if img != nil {
-					dest := make([]byte, len(img))
-					copy(dest, img)
-
-					if h.Storage != nil {
-						ts := strconv.FormatInt(time.Now().UnixMilli(), 10)
-						if err := h.Storage.UploadFile(h.Context, "/raw/"+ts+".jpeg", dest); err != nil {
-							log.Println("failed to upload file. falling back to telegram")
-							if err := h.Telegram.SendPhoto(h.ChatId, dest); err != nil {
-								h.Cancel()
-								log.Println("SendPhoto error: ", err)
-							}
+				if h.Storage != nil && h.Handlers == 0 {
+					ts := strconv.FormatInt(time.Now().UnixMilli(), 10)
+					if err := h.Storage.UploadFile(h.Context, "/raw/"+ts+".jpeg", img); err != nil {
+						log.Println("failed to upload file. falling back to telegram")
+						if err := h.Telegram.SendPhoto(h.ChatId, img); err != nil {
+							h.Cancel()
+							log.Println("SendPhoto error: ", err)
 						}
 					}
 				}
