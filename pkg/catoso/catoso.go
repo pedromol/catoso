@@ -13,7 +13,7 @@ import (
 	"github.com/pedromol/catoso/pkg/camera"
 	"github.com/pedromol/catoso/pkg/config"
 	"github.com/pedromol/catoso/pkg/encoder"
-	"github.com/pedromol/catoso/pkg/queue"
+	"github.com/pedromol/catoso/pkg/storage"
 	"github.com/pedromol/catoso/pkg/telegram"
 	"github.com/pedromol/catoso/pkg/vision"
 )
@@ -26,7 +26,7 @@ type Catoso struct {
 	Encoder  *encoder.Encoder
 	Vision   *vision.Vision
 	Stream   *vision.Stream
-	Queue    *queue.Queue
+	Storage  *storage.Storage
 	Context  context.Context
 	Cancel   context.CancelFunc
 	Handlers int
@@ -97,13 +97,9 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 		}()
 	}
 
-	var q *queue.Queue
-	if cfg.AmqpConnection != "" {
-		q = queue.NewQueue(cfg.AmqpConnection, cfg.AmqpTopic)
-		err = q.Connect()
-		if err != nil {
-			log.Printf("failed to connect amqp: %s", err)
-		}
+	var s *storage.Storage
+	if cfg.BucketURI != "" {
+		s = storage.NewStorage(cfg.BucketURI, cfg.BucketKey, cfg.BucketSecret, cfg.BucketName)
 	}
 
 	return &Catoso{
@@ -114,7 +110,7 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 		Encoder:  enc,
 		Vision:   vis,
 		Stream:   st,
-		Queue:    q,
+		Storage:  s,
 	}, nil
 
 }
@@ -161,18 +157,14 @@ func (h *Catoso) Start() {
 					dest := make([]byte, len(img))
 					copy(dest, img)
 
-					if h.Queue != nil {
-						if err := h.Queue.Send(h.Context, dest); err != nil {
-							log.Println("Queue.Send error failing back: ", err)
+					if h.Storage != nil {
+						ts := strconv.FormatInt(time.Now().UnixMilli(), 10)
+						if err := h.Storage.UploadFile(h.Context, "/raw/"+ts+".jpeg", dest); err != nil {
+							log.Println("failed to upload file. falling back to telegram")
 							if err := h.Telegram.SendPhoto(h.ChatId, dest); err != nil {
 								h.Cancel()
 								log.Println("SendPhoto error: ", err)
 							}
-						}
-					} else {
-						if err := h.Telegram.SendPhoto(h.ChatId, dest); err != nil {
-							h.Cancel()
-							log.Println("SendPhoto error: ", err)
 						}
 					}
 				}

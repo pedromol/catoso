@@ -20,8 +20,10 @@ type Config struct {
 	DelayAfterDetectMin string `json:"delayAfterDetectMin"`
 	DrawOverFace        string `json:"drawOverFace"`
 	ExitAfterMin        string `json:"exitAfterMin"`
-	AmqpConnection      string `json:"-"`
-	AmqpTopic           string `json:"amqpTopic"`
+	BucketURI           string `json:"bucketURI"`
+	BucketName          string `json:"bucketName"`
+	BucketKey           string `json:"bucketKey"`
+	BucketSecret        string `json:"-"`
 }
 
 func NewConfig() (*Config, error) {
@@ -40,8 +42,10 @@ func NewConfig() (*Config, error) {
 		DelayAfterDetectMin: os.Getenv("DELAY_AFTER_DETECT_MIN"),
 		DrawOverFace:        os.Getenv("DRAW_OVER_FACE"),
 		ExitAfterMin:        os.Getenv("EXIT_AFTER_MIN"),
-		AmqpConnection:      os.Getenv("AMQP_CONNECTION"),
-		AmqpTopic:           os.Getenv("AMQP_TOPIC"),
+		BucketURI:           os.Getenv("BUCKET_URI"),
+		BucketName:          os.Getenv("BUCKET_NAME"),
+		BucketKey:           os.Getenv("BUCKET_KEY"),
+		BucketSecret:        os.Getenv("BUCKET_SECRET"),
 	}
 
 	if cfg.InputImage == "" {
