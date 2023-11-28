@@ -31,6 +31,15 @@ const headerf = "\r\n" +
 
 // ServeHTTP responds to HTTP requests with the MJPEG stream, implementing the http.Handler interface.
 func (s *Stream) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization,X-CSRF-Token")
+	w.Header().Set("Access-Control-Expose-Headers", "Authorization")
+	if r.Method == "OPTIONS" {
+		w.Write([]byte{})
+		return
+	}
+
 	w.Header().Add("Content-Type", "multipart/x-mixed-replace;boundary="+boundaryWord)
 
 	c := make(chan []byte)
