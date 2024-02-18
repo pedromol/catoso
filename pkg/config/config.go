@@ -24,6 +24,7 @@ type Config struct {
 	BucketName          string `json:"bucketName"`
 	BucketKey           string `json:"bucketKey"`
 	BucketSecret        string `json:"-"`
+	UseCuda             string `json:"-"`
 }
 
 func NewConfig() (*Config, error) {
@@ -46,6 +47,7 @@ func NewConfig() (*Config, error) {
 		BucketName:          os.Getenv("BUCKET_NAME"),
 		BucketKey:           os.Getenv("BUCKET_KEY"),
 		BucketSecret:        os.Getenv("BUCKET_SECRET"),
+		UseCuda:             os.Getenv("USE_CUDA"),
 	}
 
 	if cfg.InputImage == "" {

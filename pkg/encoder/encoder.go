@@ -22,12 +22,14 @@ type VideoInfo struct {
 type Encoder struct {
 	InputImage string
 	Fps        string
+	Cuda       bool
 }
 
-func NewEncoder(input string, fps string) *Encoder {
+func NewEncoder(input string, fps string, cuda string) *Encoder {
 	return &Encoder{
 		InputImage: input,
 		Fps:        fps,
+		Cuda:       cuda != "",
 	}
 }
 
@@ -58,7 +60,15 @@ func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr i
 	} else {
 		output = ffmpeg.KwArgs{"format": "rawvideo", "pix_fmt": "rgb24"}
 	}
-	return ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": "tcp"}).
+
+	var input ffmpeg.KwArgs
+	if h.Cuda {
+		input = ffmpeg.KwArgs{"hwaccel": "nvdec", "rtsp_transport": "tcp"}
+	} else {
+		input = ffmpeg.KwArgs{"rtsp_transport": "tcp"}
+	}
+
+	return ffmpeg.Input(h.InputImage, input).
 		Output("pipe:", output).
 		WithOutput(stdout).
 		WithErrorOutput(stderr).

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"gocv.io/x/gocv"
+	"gocv.io/x/gocv/cuda"
 )
 
 const Catoso = "Catoso"
@@ -26,6 +27,7 @@ type Vision struct {
 }
 
 func NewVision(xmlPath string, w int, h int, delay int64, fskip int, debug bool, draw bool) *Vision {
+
 	return &Vision{
 		XmlFile:             xmlPath,
 		Width:               w,
@@ -37,7 +39,7 @@ func NewVision(xmlPath string, w int, h int, delay int64, fskip int, debug bool,
 	}
 }
 
-func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stream) (chan []byte, chan error) {
+func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stream, useCuda bool) (chan []byte, chan error) {
 	result := make(chan error)
 	imgchan := make(chan []byte)
 	var win *gocv.Window
@@ -51,8 +53,14 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 
 		blue := color.RGBA{B: 255}
 
-		classifier := gocv.NewCascadeClassifier()
-		defer classifier.Close()
+		var classifier gocv.CascadeClassifier
+		var cudaClassifier cuda.CascadeClassifier
+		if useCuda {
+			classifier = gocv.NewCascadeClassifier()
+			defer classifier.Close()
+		} else {
+			cudaClassifier = cuda.NewCascadeClassifier(v.XmlFile)
+		}
 
 		if !classifier.Load(v.XmlFile) {
 			result <- errors.New("error reading cascade file: " + v.XmlFile)
@@ -120,7 +128,16 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 				continue
 			}
 
-			rects := classifier.DetectMultiScale(img2)
+			var rects []image.Rectangle
+			if useCuda {
+				cImg := cuda.NewGpuMat()
+				cImg.Upload(img2)
+				rects = cudaClassifier.DetectMultiScale(cImg)
+				cImg.Close()
+			} else {
+				rects = classifier.DetectMultiScale(img2)
+			}
+
 			if len(rects) > 0 {
 				detected += 1
 			} else {

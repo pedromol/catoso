@@ -45,7 +45,7 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 
 	cam := camera.NewCamera(cfg.OnvifIP, cfg.OnvifPort)
 
-	enc := encoder.NewEncoder(cfg.InputImage, cfg.InputFps)
+	enc := encoder.NewEncoder(cfg.InputImage, cfg.InputFps, cfg.UseCuda)
 	w, h, err := enc.GetVideoSize()
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func (h *Catoso) Start() {
 
 		ffchan := h.Encoder.ReadStream(h.Context, pw1, ew1)
 		errchan := h.Encoder.Catch(h.Context, er1)
-		cvimg, cvchan := h.Vision.Process(h.Context, pr1, h.Stream)
+		cvimg, cvchan := h.Vision.Process(h.Context, pr1, h.Stream, h.Config.UseCuda != "")
 
 		h.Handlers = 0
 	loop:
