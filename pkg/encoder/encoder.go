@@ -20,19 +20,24 @@ type VideoInfo struct {
 }
 
 type Encoder struct {
-	InputImage string
-	Fps        string
+	InputImage    string
+	InputProtocol string
+	Fps           string
 }
 
-func NewEncoder(input string, fps string) *Encoder {
+func NewEncoder(input string, fps string, protocol string) *Encoder {
+	if protocol == "" {
+		protocol = "tcp"
+	}
 	return &Encoder{
-		InputImage: input,
-		Fps:        fps,
+		InputImage:    input,
+		InputProtocol: protocol,
+		Fps:           fps,
 	}
 }
 
 func (h Encoder) GetVideoSize() (int, int, error) {
-	data, err := ffmpeg.ProbeWithTimeout(h.InputImage, time.Duration(time.Second*30), ffmpeg.KwArgs{"rtsp_transport": "tcp"})
+	data, err := ffmpeg.ProbeWithTimeout(h.InputImage, time.Duration(time.Second*30), ffmpeg.KwArgs{"rtsp_transport": h.InputProtocol})
 	if err != nil {
 		return 0, 0, err
 	}
@@ -58,7 +63,7 @@ func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr i
 	} else {
 		output = ffmpeg.KwArgs{"format": "rawvideo", "pix_fmt": "rgb24"}
 	}
-	return ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": "tcp"}).
+	return ffmpeg.Input(h.InputImage, ffmpeg.KwArgs{"rtsp_transport": h.InputProtocol}).
 		Output("pipe:", output).
 		WithOutput(stdout).
 		WithErrorOutput(stderr).

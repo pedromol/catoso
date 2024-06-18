@@ -11,7 +11,11 @@ type Config struct {
 	OnvifIP             string `json:"onvifIP"`
 	OnvifPort           string `json:"onvifPort"`
 	InputImage          string `json:"inputImage"`
+	InputProtocol       string `json:"inputProtocol"`
 	InputFps            string `json:"inputFps"`
+	InputPrefix         string `json:"inputPrefix"`
+	InputHost           string `json:"inputHost"`
+	InputSuffix         string `json:"inputSuffix"`
 	CascadePath         string `json:"cascadePath"`
 	CenterCamera        string `json:"centerCamera"`
 	CatosoDebug         string `json:"catosoDebug"`
@@ -33,10 +37,14 @@ func NewConfig() (*Config, error) {
 		OnvifIP:             os.Getenv("ONVIF_IP"),
 		OnvifPort:           os.Getenv("ONVIF_PORT"),
 		InputImage:          os.Getenv("INPUT_IMAGE"),
+		InputProtocol:       os.Getenv("INPUT_PROTOCOL"),
 		CascadePath:         os.Getenv("CASCADE_PATH"),
 		CenterCamera:        os.Getenv("CENTER_CAMERA"),
 		CatosoDebug:         os.Getenv("CATOSO_DEBUG"),
 		InputFps:            os.Getenv("INPUT_FPS"),
+		InputPrefix:         os.Getenv("INPUT_PREFIX"),
+		InputHost:           os.Getenv("INPUT_HOST"),
+		InputSuffix:         os.Getenv("INPUT_SUFFIX"),
 		StreamPort:          os.Getenv("STREAM_PORT"),
 		OutputFrameSkip:     os.Getenv("OUTPUT_FRAMESKIP"),
 		DelayAfterDetectMin: os.Getenv("DELAY_AFTER_DETECT_MIN"),
@@ -48,6 +56,9 @@ func NewConfig() (*Config, error) {
 		BucketSecret:        os.Getenv("BUCKET_SECRET"),
 	}
 
+	if cfg.InputImage == "" {
+		cfg.InputImage = cfg.InputPrefix + cfg.InputHost + cfg.InputSuffix
+	}
 	if cfg.InputImage == "" {
 		return nil, errors.New("missing INPUT_IMAGE env")
 	}

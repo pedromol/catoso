@@ -1,4 +1,4 @@
-FROM pedromol/catoso-base
+FROM pedromol/catoso:base
     
 COPY cmd /go/src/app/cmd
 COPY pkg /go/src/app/pkg
