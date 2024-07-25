@@ -20,21 +20,23 @@ type VideoInfo struct {
 }
 
 type Encoder struct {
-	InputImage string
-	Fps        string
-	Cuda       bool
+	InputImage    string
+	InputProtocol string
+	Fps           string
+	Cuda          bool
 }
 
-func NewEncoder(input string, fps string, cuda string) *Encoder {
+func NewEncoder(input string, fps string, protocol string, cuda string) *Encoder {
 	return &Encoder{
-		InputImage: input,
-		Fps:        fps,
-		Cuda:       cuda != "",
+		InputImage:    input,
+		InputProtocol: protocol,
+		Fps:           fps,
+		Cuda:          cuda != "",
 	}
 }
 
 func (h Encoder) GetVideoSize() (int, int, error) {
-	data, err := ffmpeg.ProbeWithTimeout(h.InputImage, time.Duration(time.Second*30), ffmpeg.KwArgs{"rtsp_transport": "tcp"})
+	data, err := ffmpeg.ProbeWithTimeout(h.InputImage, time.Duration(time.Second*30), ffmpeg.KwArgs{"rtsp_transport": h.InputProtocol})
 	if err != nil {
 		return 0, 0, err
 	}
@@ -63,9 +65,9 @@ func (h Encoder) ReadStream(ctx context.Context, stdout io.WriteCloser, stderr i
 
 	var input ffmpeg.KwArgs
 	if h.Cuda {
-		input = ffmpeg.KwArgs{"hwaccel": "nvdec", "rtsp_transport": "tcp"}
+		input = ffmpeg.KwArgs{"hwaccel": "nvdec", "rtsp_transport": h.InputProtocol}
 	} else {
-		input = ffmpeg.KwArgs{"rtsp_transport": "tcp"}
+		input = ffmpeg.KwArgs{"rtsp_transport": h.InputProtocol}
 	}
 
 	return ffmpeg.Input(h.InputImage, input).

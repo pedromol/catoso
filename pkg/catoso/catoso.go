@@ -13,6 +13,7 @@ import (
 	"github.com/pedromol/catoso/pkg/camera"
 	"github.com/pedromol/catoso/pkg/config"
 	"github.com/pedromol/catoso/pkg/encoder"
+	"github.com/pedromol/catoso/pkg/health"
 	"github.com/pedromol/catoso/pkg/storage"
 	"github.com/pedromol/catoso/pkg/telegram"
 	"github.com/pedromol/catoso/pkg/vision"
@@ -45,7 +46,7 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 
 	cam := camera.NewCamera(cfg.OnvifIP, cfg.OnvifPort)
 
-	enc := encoder.NewEncoder(cfg.InputImage, cfg.InputFps, cfg.UseCuda)
+	enc := encoder.NewEncoder(cfg.InputImage, cfg.InputFps, cfg.InputProtocol, cfg.UseCuda)
 	w, h, err := enc.GetVideoSize()
 	if err != nil {
 		return nil, err
@@ -74,7 +75,7 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 
 	draw := false
 	if cfg.DrawOverFace != "" {
-		debug = true
+		draw = true
 	}
 
 	vis := vision.NewVision(cfg.CascadePath, w, h, delay, fskip, debug, draw)
@@ -82,8 +83,13 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 	var st *vision.Stream
 	if cfg.StreamPort != "" {
 		st = vision.NewStream()
+		h, err := health.NewHealth(cfg.InputImage)
+		if err != nil {
+			return nil, err
+		}
 
 		http.Handle("/", st)
+		http.Handle("/health", h)
 
 		server := &http.Server{
 			Addr:         "0.0.0.0:" + cfg.StreamPort,
