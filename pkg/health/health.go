@@ -2,25 +2,17 @@ package health
 
 import (
 	"bytes"
-	"errors"
 	"net"
 	"net/http"
-	"regexp"
 )
 
 type Health struct {
-	Url  string
 	Host string
 }
 
 func NewHealth(url string) (*Health, error) {
-	s := regexp.MustCompile(`^[a-z]+://([^:]+):([0-9]+)`).FindStringSubmatch(url)
-	if len(s) != 3 {
-		return nil, errors.New("invalid url")
-	}
 	return &Health{
-		Url:  url,
-		Host: s[1] + ":" + s[2],
+		Host: url,
 	}, nil
 }
 

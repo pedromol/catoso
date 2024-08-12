@@ -83,7 +83,7 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 	var st *vision.Stream
 	if cfg.StreamPort != "" {
 		st = vision.NewStream()
-		h, err := health.NewHealth(cfg.InputImage)
+		h, err := health.NewHealth(cfg.HealthURI)
 		if err != nil {
 			return nil, err
 		}

@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"os"
+	"regexp"
 )
 
 type Config struct {
@@ -28,6 +29,7 @@ type Config struct {
 	BucketName          string `json:"bucketName"`
 	BucketKey           string `json:"bucketKey"`
 	BucketSecret        string `json:"-"`
+	HealthURI           string `json:"healthURI"`
 }
 
 func NewConfig() (*Config, error) {
@@ -54,6 +56,7 @@ func NewConfig() (*Config, error) {
 		BucketName:          os.Getenv("BUCKET_NAME"),
 		BucketKey:           os.Getenv("BUCKET_KEY"),
 		BucketSecret:        os.Getenv("BUCKET_SECRET"),
+		HealthURI:           os.Getenv("HEALTH_URI"),
 	}
 
 	if cfg.InputImage == "" {
@@ -69,6 +72,14 @@ func NewConfig() (*Config, error) {
 	_, err := os.Stat(cfg.CascadePath)
 	if err != nil {
 		return nil, err
+	}
+
+	if cfg.HealthURI == "" {
+		s := regexp.MustCompile(`^[a-z]+://([^:]+):([0-9]+)`).FindStringSubmatch(cfg.InputImage)
+		if len(s) != 3 {
+			return nil, errors.New("invalid health url")
+		}
+		cfg.HealthURI = s[1] + ":" + s[2]
 	}
 
 	return &cfg, nil
