@@ -23,6 +23,7 @@ type Config struct {
 	StreamPort          string `json:"streamPort"`
 	OutputFrameSkip     string `json:"outputFrameSkip"`
 	DelayAfterDetectMin string `json:"delayAfterDetectMin"`
+	RequiredDetections  string `json:"requiredDetections"`
 	DrawOverFace        string `json:"drawOverFace"`
 	ExitAfterMin        string `json:"exitAfterMin"`
 	BucketURI           string `json:"bucketURI"`
@@ -50,6 +51,7 @@ func NewConfig() (*Config, error) {
 		StreamPort:          os.Getenv("STREAM_PORT"),
 		OutputFrameSkip:     os.Getenv("OUTPUT_FRAMESKIP"),
 		DelayAfterDetectMin: os.Getenv("DELAY_AFTER_DETECT_MIN"),
+		RequiredDetections:  os.Getenv("REQUIRED_DETECTIONS"),
 		DrawOverFace:        os.Getenv("DRAW_OVER_FACE"),
 		ExitAfterMin:        os.Getenv("EXIT_AFTER_MIN"),
 		BucketURI:           os.Getenv("BUCKET_URI"),

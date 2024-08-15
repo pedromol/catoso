@@ -73,12 +73,20 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 		}
 	}
 
+	reqDetect := 3
+	if cfg.RequiredDetections != "" {
+		reqDetect, err = strconv.Atoi(cfg.RequiredDetections)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	draw := false
 	if cfg.DrawOverFace != "" {
 		draw = true
 	}
 
-	vis := vision.NewVision(cfg.CascadePath, w, h, delay, fskip, debug, draw)
+	vis := vision.NewVision(cfg.CascadePath, w, h, delay, fskip, reqDetect, debug, draw)
 
 	var st *vision.Stream
 	if cfg.StreamPort != "" {

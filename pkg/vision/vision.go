@@ -20,17 +20,19 @@ type Vision struct {
 	Width               int
 	Height              int
 	DelayAfterDetectMin int64
+	RequireDetection    int
 	Frameskip           int
 	Debug               bool
 	DrawOverFace        bool
 }
 
-func NewVision(xmlPath string, w int, h int, delay int64, fskip int, debug bool, draw bool) *Vision {
+func NewVision(xmlPath string, w int, h int, delay int64, fskip int, reqdec int, debug bool, draw bool) *Vision {
 	return &Vision{
 		XmlFile:             xmlPath,
 		Width:               w,
 		Height:              h,
 		DelayAfterDetectMin: delay,
+		RequireDetection:    reqdec,
 		Frameskip:           fskip,
 		Debug:               debug,
 		DrawOverFace:        draw,
@@ -127,7 +129,7 @@ func (v *Vision) Process(ctx context.Context, reader io.ReadCloser, stream *Stre
 				detected = 0
 			}
 
-			if detected > 3 {
+			if detected > v.RequireDetection {
 				detected = 0
 				log.Println(Catoso)
 				lastConfirmed = time.Now().Add(time.Minute * time.Duration(v.DelayAfterDetectMin))
