@@ -20,17 +20,18 @@ import (
 )
 
 type Catoso struct {
-	Config   *config.Config
-	Telegram *telegram.Telegram
-	ChatId   int64
-	Camera   *camera.Camera
-	Encoder  *encoder.Encoder
-	Vision   *vision.Vision
-	Stream   *vision.Stream
-	Storage  *storage.Storage
-	Context  context.Context
-	Cancel   context.CancelFunc
-	Handlers int
+	Config         *config.Config
+	Telegram       *telegram.Telegram
+	TelegramAlways bool
+	ChatId         int64
+	Camera         *camera.Camera
+	Encoder        *encoder.Encoder
+	Vision         *vision.Vision
+	Stream         *vision.Stream
+	Storage        *storage.Storage
+	Context        context.Context
+	Cancel         context.CancelFunc
+	Handlers       int
 }
 
 func NewCatoso(cfg *config.Config) (*Catoso, error) {
@@ -117,14 +118,15 @@ func NewCatoso(cfg *config.Config) (*Catoso, error) {
 	}
 
 	return &Catoso{
-		Config:   cfg,
-		Telegram: tel,
-		ChatId:   chatId,
-		Camera:   cam,
-		Encoder:  enc,
-		Vision:   vis,
-		Stream:   st,
-		Storage:  s,
+		Config:         cfg,
+		Telegram:       tel,
+		TelegramAlways: cfg.TelegramAlways == "true",
+		ChatId:         chatId,
+		Camera:         cam,
+		Encoder:        enc,
+		Vision:         vis,
+		Stream:         st,
+		Storage:        s,
 	}, nil
 
 }
@@ -169,8 +171,9 @@ func (h *Catoso) Start() {
 			case img := <-cvimg:
 				if h.Storage != nil && h.Handlers == 0 {
 					ts := strconv.FormatInt(time.Now().UnixMilli(), 10)
-					if err := h.Storage.UploadFile(h.Context, "/raw/"+ts+".jpeg", img); err != nil {
-						log.Println("failed to upload file. falling back to telegram")
+					err := h.Storage.UploadFile(h.Context, "/raw/"+ts+".jpeg", img)
+					if err != nil || h.TelegramAlways {
+						log.Println("sending to telegram")
 						if err := h.Telegram.SendPhoto(h.ChatId, img); err != nil {
 							h.Cancel()
 							log.Println("SendPhoto error: ", err)

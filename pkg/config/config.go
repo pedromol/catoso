@@ -9,6 +9,7 @@ import (
 type Config struct {
 	TelegramToken       string `json:"-"`
 	TelegramChat        string `json:"telegramChat"`
+	TelegramAlways      string `json:"telegramAlways"`
 	OnvifIP             string `json:"onvifIP"`
 	OnvifPort           string `json:"onvifPort"`
 	InputImage          string `json:"inputImage"`
@@ -37,6 +38,7 @@ func NewConfig() (*Config, error) {
 	cfg := Config{
 		TelegramToken:       os.Getenv("TELEGRAM_TOKEN"),
 		TelegramChat:        os.Getenv("TELEGRAM_CHAT"),
+		TelegramAlways:      os.Getenv("TELEGRAM_ALWAYS"),
 		OnvifIP:             os.Getenv("ONVIF_IP"),
 		OnvifPort:           os.Getenv("ONVIF_PORT"),
 		InputImage:          os.Getenv("INPUT_IMAGE"),
